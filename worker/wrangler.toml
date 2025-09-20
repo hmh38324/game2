@@ -15,6 +15,6 @@ id = "817c89e2d5264e57b11edf850005802d"
 
 [vars]
 # 允许的前端域名（逗号分隔）
-ALLOWED_ORIGINS = "https://game2.biboran.top,https://game2-worker.hmh38324.workers.dev,https://digital-huarongdao.pages.dev,https://350996da.game2-c61.pages.dev,https://game2-c61.pages.dev"
+ALLOWED_ORIGINS = "https://liqunduiduipeng.biboran.top,https://duiduipengapi.biboran.top,https://game2.biboran.top,https://game2-worker.hmh38324.workers.dev,https://digital-huarongdao.pages.dev,https://350996da.game2-c61.pages.dev,https://game2-c61.pages.dev"
 
 

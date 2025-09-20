@@ -248,7 +248,7 @@ export default {
           "POST /admin/clear": "管理员清空数据",
           "POST /admin/edit": "管理员编辑用户"
         },
-        example: "https://game2-worker.hmh38324.workers.dev/leaderboard"
+        example: "https://duiduipengapi.biboran.top/leaderboard"
       }, origin, 200);
     }
 
