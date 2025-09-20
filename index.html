@@ -131,36 +131,6 @@
 
         .puzzle-piece.flipped {
             transform: rotateY(0deg);
-            position: relative;
-        }
-
-        .puzzle-piece.flipped::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image: var(--bg-image);
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            opacity: 0.3;
-            z-index: 1;
-        }
-
-        .puzzle-piece.flipped::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image: var(--front-image);
-            background-size: contain;
-            background-position: center;
-            background-repeat: no-repeat;
-            z-index: 2;
         }
 
         .puzzle-piece.selected {
@@ -623,13 +593,12 @@
 </head>
 <body>
     <div class="game-container">
-        <h1>🎯 对对碰游戏</h1>
+        <h1>🎯 利群对对碰</h1>
         <div class="game-info">
             <p>点击翻开卡片，找到所有8对相同的图片！每次只能翻开2张牌！</p>
         </div>
         
         <div class="controls">
-            <button onclick="shufflePuzzle()">🔀 重新开始</button>
             <button onclick="showLeaderboard()" id="leaderboardBtn">🏆 排行榜</button>
             <button onclick="showLoginModal()" id="loginBtn">🔐 登录</button>
             <button onclick="showSettingsModal()" id="settingsBtn">⚙️ 设置</button>
@@ -830,12 +799,8 @@
                     if (this.pieceImages[index]) {
                         // 如果卡片已匹配，显示图片并标记为已匹配
                         if (this.flippedCards.includes(index) || this.selectedPieces.includes(index)) {
+                            piece.style.backgroundImage = `url(${this.pieceImages[index]})`;
                             piece.classList.add('flipped');
-                            // 设置背景图片和正面图片
-                            const row = Math.floor(index / 4);
-                            const col = index % 4;
-                            piece.style.setProperty('--bg-image', `url('card_backgrounds/card_bg_${row}_${col}.png')`);
-                            piece.style.setProperty('--front-image', `url(${this.pieceImages[index]})`);
                         } else {
                             // 显示卡片背面，设置对应的背景图片
                             piece.classList.add('card-back');
