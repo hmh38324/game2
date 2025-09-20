@@ -235,6 +235,23 @@ export default {
       return json({ ok: true }, origin, 200);
     }
 
+    // 根路径显示 API 信息
+    if (url.pathname === "/" && req.method === "GET") {
+      return json({
+        message: "Game2 Worker API",
+        version: "1.0.0",
+        endpoints: {
+          "GET /leaderboard": "获取排行榜",
+          "GET /attempts?userId=xxx": "获取用户尝试次数",
+          "POST /begin": "开始一次尝试",
+          "POST /submit": "提交成绩",
+          "POST /admin/clear": "管理员清空数据",
+          "POST /admin/edit": "管理员编辑用户"
+        },
+        example: "https://game2-worker.hmh38324.workers.dev/leaderboard"
+      }, origin, 200);
+    }
+
     return json({ error: "Not Found" }, origin, 404);
   },
 } satisfies ExportedHandler<Env>;
