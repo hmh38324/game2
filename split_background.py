@@ -58,7 +58,7 @@ def split_background():
             # 保存小块
             filename = f'card_bg_{row}_{col}.png'
             piece.save(os.path.join(card_bg_dir, filename))
-            print(f"已保存: {filename}")
+            print(f"已保存: {filename} (位置: 行{row}, 列{col}, 裁剪区域: {left},{top},{right},{bottom})")
     
     print(f"完成！已将背景图片分割成16个小块，保存在 {card_bg_dir} 文件夹中")
 

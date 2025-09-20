@@ -155,7 +155,7 @@
             background-position: center;
             background-repeat: no-repeat;
             opacity: 0.6;
-            transform: rotateY(180deg);
+            transform: rotateY(0deg);
         }
 
         .controls {
@@ -808,8 +808,6 @@
                             const row = Math.floor(index / 4);
                             const col = index % 4;
                             piece.style.backgroundImage = `url('card_backgrounds/card_bg_${row}_${col}.png')`;
-                            // 调试信息
-                            piece.title = `索引: ${index}, 位置: (${row},${col})`;
                         }
                         
                         // 如果已匹配，添加匹配状态
