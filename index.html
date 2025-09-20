@@ -543,9 +543,7 @@
         </div>
         
         <div class="controls">
-            <button onclick="showLeaderboard()" id="leaderboardBtn">🏆 排行榜</button>
-            <button onclick="showLoginModal()" id="loginBtn">🔐 登录</button>
-            <button onclick="showSettingsModal()" id="settingsBtn">⚙️ 设置</button>
+            <button onclick="shufflePuzzle()">🔀 重新开始</button>
         </div>
         
         <div class="game-content">
@@ -554,44 +552,10 @@
                     <!-- 图片块将通过JavaScript动态生成 -->
                 </div>
                 <div class="score">
-                    <p>点击次数: <span id="moveCount">0</span>   用时: <span id="elapsedTime">00:00</span>   剩余次数: <span id="remainingAttempts">—</span>   已配对: <span id="matchedCount">0</span>/8 对   当前用户: <span id="userInfo"></span></p>
+                    <p>点击次数: <span id="moveCount">0</span>   用时: <span id="elapsedTime">00:00</span>   已配对: <span id="matchedCount">0</span>/8 对</p>
                 </div>
             </div>
             
-        </div>
-    </div>
-
-    <!-- 设置弹窗 -->
-    <div class="login-modal" id="settingsModal">
-        <div class="login-content">
-            <h2>⚙️ 设置</h2>
-            <div id="settingsBody">
-                <div class="form-group">
-                    <label>请输入密码：</label>
-                    <input type="password" id="settingsPwd" placeholder="密码">
-                </div>
-                <div class="form-buttons">
-                    <button type="button" onclick="enterSettings()">进入</button>
-                    <button type="button" onclick="closeSettingsModal()">关闭</button>
-                </div>
-            </div>
-            <div id="adminPanel" style="display:none">
-                <div class="form-buttons" style="justify-content: flex-start; gap: 8px;">
-                    <button type="button" onclick="adminExportCSV()">导出排行榜 CSV</button>
-                    <button type="button" onclick="adminClearAll()">删除全部排行榜</button>
-                </div>
-                <h3 style="margin-top:16px">编辑用户</h3>
-                <div class="form-group"><label>工号</label><input id="admUserId"></div>
-                <div class="form-group"><label>姓名</label><input id="admNickname"></div>
-                <div class="form-group"><label>时间(ms 或 mm:ss)</label><input id="admTime" type="text"></div>
-                <div class="form-group"><label>步数</label><input id="admMoves" type="number" min="0"></div>
-                <div class="form-group"><label>已用次数</label><input id="admAttempts" type="number" min="0"></div>
-                <div class="form-buttons" style="justify-content:flex-start;gap:8px;">
-                    <button type="button" onclick="adminEditUser()">保存</button>
-                    <button type="button" onclick="closeSettingsModal()">关闭</button>
-                </div>
-            </div>
-            <div id="settingsError" class="error-message"></div>
         </div>
     </div>
 
@@ -604,47 +568,9 @@
         <button onclick="closeWinMessage()">再玩一次</button>
     </div>
 
-    <!-- 登录弹窗 -->
-    <div class="login-modal" id="loginModal">
-        <div class="login-content">
-            <h2>🔐 用户登录</h2>
-            <form onsubmit="handleLogin(event)">
-                <div class="form-group">
-                    <label for="employeeId">工号:</label>
-                    <input type="text" id="employeeId" name="employeeId" required>
-                </div>
-                <div class="form-group">
-                    <label for="employeeName">姓名:</label>
-                    <input type="text" id="employeeName" name="employeeName" required>
-                </div>
-                <div class="form-buttons">
-                    <button type="submit">登录</button>
-                    <button type="button" onclick="closeLoginModal()">取消</button>
-                </div>
-            </form>
-            <div id="loginError" class="error-message"></div>
-        </div>
-    </div>
-
-    <!-- 排行榜弹窗 -->
-    <div class="leaderboard-modal" id="leaderboardModal">
-        <div class="leaderboard-content">
-            <h2>🏆 排行榜</h2>
-            <div id="leaderboardCurrentUser" class="leaderboard-current-user" style="display:none"></div>
-            <div class="leaderboard-list" id="leaderboardList">
-                <!-- 排行榜内容将通过JavaScript动态生成 -->
-            </div>
-            <div class="leaderboard-buttons">
-                <button onclick="closeLeaderboard()">关闭</button>
-            </div>
-        </div>
-    </div>
-
     
 
     <script>
-        // Cloudflare Worker API 基础地址
-        const WORKER_BASE_URL = 'https://duiduipengapi.biboran.top';
         class PuzzleGame {
             constructor() {
                 this.pieces = [];
@@ -654,19 +580,11 @@
                 this.matchedPairs = 0; // 已匹配的对数
                 this.flippedCards = []; // 存储已翻开的卡片
                 this.isFlipping = false; // 是否正在翻转动画中
-                // 尝试与计时状态
-                this.hasAttemptRecorded = false; // 是否已记录开局
+                // 计时状态
                 this.hasTimerRunning = false; // 是否已开始计时
                 this.timerStartMs = null; // 计时起点
                 this.elapsedMs = 0; // 当前累计用时
                 this.timerInterval = null; // 定时器句柄
-                this.isLoggedIn = false;
-                this.currentUser = null;
-                this.peopleData = null;
-                this.leaderboard = {};
-                this.leaderboardVersion = 2; // schema version
-                this.currentAttemptId = null;
-                this.maxAttempts = 3;
                 // 使用pic文件夹中的8个图片，每个图片出现2次
                 this.pieceImages = [
                     'pic/1.png', 'pic/2.png', 'pic/3.png', 'pic/4.png',
@@ -674,31 +592,13 @@
                     'pic/1.png', 'pic/2.png', 'pic/3.png', 'pic/4.png',
                     'pic/5.png', 'pic/6.png', 'pic/7.png', 'pic/8.png'
                 ];
-                this.loadPeopleData();
-                // Worker-only 模式，无 Gist
+                this.init();
             }
 
-            async loadPeopleData() {
-                try {
-                    const response = await fetch('people.json');
-                    this.peopleData = await response.json();
-                    this.init();
-                } catch (error) {
-                    console.error('加载人员数据失败:', error);
-                    // 使用默认数据
-                    this.peopleData = [
-                        {"工号": "1", "姓名": "张三"},
-                        {"工号": "2", "姓名": "李四"},
-                        {"工号": "3", "姓名": "王五"}
-                    ];
-                    this.init();
-                }
-            }
 
             init() {
                 this.createPuzzle();
                 this.renderPuzzle();
-                this.updateUserInfo();
                 // 首次进入游戏时自动打乱
                 setTimeout(() => {
                     this.shufflePuzzle();
@@ -759,21 +659,8 @@
                 });
             }
 
-            async selectPiece(index) {
+            selectPiece(index) {
                 if (this.isGameWon || this.isFlipping) return;
-                
-                // 检查是否已登录
-                if (!this.isLoggedIn) {
-                    alert('请先登录才能开始游戏！');
-                    return;
-                }
-                
-                // 首次有效移动前，先记录一次开局（Worker-only，无 Gist）
-                if (!this.hasAttemptRecorded) {
-                    const ok = await this.beginAttemptIfAllowed().catch(() => false);
-                    if (!ok) { return; }
-                    this.hasAttemptRecorded = true;
-                }
                 
                 // 如果图片已经被消除或已经翻开，不能选择
                 if (!this.pieceImages[index] || this.flippedCards.includes(index)) return;
@@ -899,8 +786,6 @@
                     this.isGameWon = true;
                     // 停止计时并计算用时
                     this.stopTimer();
-                    // 更新排行榜
-                    this.updateLeaderboard();
                     // 停顿两秒后再显示成功提醒
                     setTimeout(() => {
                         this.showWinMessage();
@@ -915,268 +800,13 @@
                 document.getElementById('winMessage').style.display = 'block';
             }
 
-            updateUserInfo() {
-                const userInfoElement = document.getElementById('userInfo');
-                if (this.isLoggedIn && this.currentUser) {
-                    userInfoElement.textContent = `${this.currentUser.姓名}(${this.currentUser.工号})`;
-                    userInfoElement.style.color = '#4CAF50';
-                } else {
-                    userInfoElement.textContent = '未登录';
-                    userInfoElement.style.color = '#e74c3c';
-                }
-            }
-
-            validateLogin(employeeId, employeeName) {
-                if (!this.peopleData) return false;
-                
-                return this.peopleData.some(person => 
-                    person.工号 === employeeId && person.姓名 === employeeName
-                );
-            }
-
-            login(employeeId, employeeName) {
-                if (this.validateLogin(employeeId, employeeName)) {
-                    this.isLoggedIn = true;
-                    this.currentUser = { 工号: employeeId, 姓名: employeeName };
-                    this.updateUserInfo();
-                    this.updateRemainingAttemptsUI();
-                    this.closeLoginModal();
-                    return true;
-                }
-                return false;
-            }
-
-            logout() {
-                this.isLoggedIn = false;
-                this.currentUser = null;
-                this.updateUserInfo();
-            }
-
-            showLoginModal() {
-                document.getElementById('overlay').style.display = 'block';
-                document.getElementById('loginModal').style.display = 'block';
-                document.getElementById('loginError').style.display = 'none';
-            }
-
-            closeLoginModal() {
-                document.getElementById('overlay').style.display = 'none';
-                document.getElementById('loginModal').style.display = 'none';
-                document.getElementById('loginError').style.display = 'none';
-                // 清空输入框
-                document.getElementById('employeeId').value = '';
-                document.getElementById('employeeName').value = '';
-            }
 
 
 
-            async updateLeaderboard() {
-                console.log('updateLeaderboard called', {
-                    isLoggedIn: this.isLoggedIn,
-                    currentUser: this.currentUser,
-                    moveCount: this.moveCount,
-                    elapsedMs: this.elapsedMs
-                });
-                
-                if (!this.isLoggedIn || !this.currentUser) {
-                    console.log('用户未登录，跳过排行榜更新');
-                    return;
-                }
-                
-                const userId = this.currentUser.工号;
-                const nickname = this.currentUser.姓名;
-                const moves = this.moveCount;
-                const timeMs = this.elapsedMs;
-                
-                // 优先提交到 Cloudflare Worker
-                if (WORKER_BASE_URL && WORKER_BASE_URL.startsWith('http')) {
-                    try {
-                        await fetch(`${WORKER_BASE_URL}/submit`, {
-                            method: 'POST',
-                            headers: { 'content-type': 'application/json' },
-                            body: JSON.stringify({ userId, nickname, moves, timeMs })
-                        });
-                    } catch (e) {
-                        console.warn('提交到 Worker 失败，退回 Gist：', e);
-                        await this.updateLeaderboardViaGist();
-                        return;
-                    }
-                    // 本地尝试记录与剩余次数更新仍保留
-                    const newRecord = { name: nickname, timeMs, steps: moves, timestamp: new Date().toISOString() };
-                    this.completeAttempt(newRecord);
-                    this.updateRemainingAttemptsUI();
-                    return;
-                }
-                
-                // Worker-only：若失败，提示错误
-                alert('提交成绩失败，请稍后重试');
-            }
 
-            async showLeaderboard() {
-                document.getElementById('overlay').style.display = 'block';
-                document.getElementById('leaderboardModal').style.display = 'block';
-                
-                // 显示加载状态
-                const leaderboardList = document.getElementById('leaderboardList');
-                leaderboardList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">🔄 正在加载最新数据...</p>';
-                
-                // 从 Worker 读取
-                try {
-                    const resp = await fetch(`${WORKER_BASE_URL}/leaderboard?limit=50`, { method: 'GET' });
-                    if (resp.ok) {
-                        const list = await resp.json();
-                        this.renderLeaderboardFromWorker(list);
-                        return;
-                    }
-                } catch (e) {
-                    console.warn('从 Worker 拉取失败：', e);
-                    const leaderboardList = document.getElementById('leaderboardList');
-                    leaderboardList.innerHTML = '<p style="text-align: center; color: #e74c3c; padding: 20px;">获取排行榜失败，请稍后重试</p>';
-                }
-            }
 
-            closeLeaderboard() {
-                document.getElementById('overlay').style.display = 'none';
-                document.getElementById('leaderboardModal').style.display = 'none';
-            }
 
-            renderLeaderboard() {
-                const leaderboardList = document.getElementById('leaderboardList');
-                const users = this.ensureUsers();
-                const entries = Object.entries(users);
-                
-                console.log('渲染排行榜数据:', {
-                    leaderboard: this.leaderboard,
-                    entries: entries,
-                    entriesCount: entries.length
-                });
-                
-                if (entries.length === 0) {
-                    leaderboardList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">暂无排行榜数据</p>';
-                    return;
-                }
-                
-                // 排序：时间升序，其次步数升序（兼容旧数据）
-                entries.sort((a, b) => {
-                    const aBest = a[1].best || {};
-                    const bBest = b[1].best || {};
-                    const aTime = typeof aBest.timeMs === 'number' ? aBest.timeMs : Infinity;
-                    const bTime = typeof bBest.timeMs === 'number' ? bBest.timeMs : Infinity;
-                    if (aTime !== bTime) return aTime - bTime;
-                    const aSteps = typeof aBest.steps === 'number' ? aBest.steps : Infinity;
-                    const bSteps = typeof bBest.steps === 'number' ? bBest.steps : Infinity;
-                    return aSteps - bSteps;
-                });
-                
-                leaderboardList.innerHTML = entries.map(([userId, data], index) => {
-                    const rank = index + 1;
-                    const isCurrentUser = this.isLoggedIn && this.currentUser && this.currentUser.工号 === userId;
-                    const rankClass = rank <= 3 ? `rank-${rank}` : '';
-                    const userClass = isCurrentUser ? 'current-user' : '';
-                    const timeText = data.best && typeof data.best.timeMs === 'number' ? this.formatMs(data.best.timeMs) : '—';
-                    const stepsVal = data.best && typeof data.best.steps === 'number' ? data.best.steps : '—';
-                    const remaining = Math.max(0, this.maxAttempts - (data.attemptsCount || 0));
-                    
-                    return `
-                        <div class="leaderboard-item ${rankClass} ${userClass}">
-                            <div class="leaderboard-rank">${rank}</div>
-                            <div class="leaderboard-user">${data.name} (${userId})</div>
-                            <div class="leaderboard-score">⏱️ ${timeText}｜👣 ${stepsVal}步｜余${remaining}</div>
-                        </div>
-                    `;
-                }).join('');
-            }
 
-            // ===== Attempts limiting and schema helpers =====
-            normalizeLeaderboard() {
-                if (!this.leaderboard || typeof this.leaderboard !== 'object') {
-                    this.leaderboard = {};
-                }
-                // If legacy flat map { userId: {name, score...} }
-                if (!this.leaderboard.users) {
-                    const users = {};
-                    for (const [userId, v] of Object.entries(this.leaderboard)) {
-                        if (userId === 'version') continue;
-                        if (typeof v !== 'object') continue;
-                        const best = {};
-                        if (typeof v.timeMs === 'number') best.timeMs = v.timeMs;
-                        if (typeof v.steps === 'number') best.steps = v.steps;
-                        if (typeof v.score === 'number' && best.steps === undefined) best.steps = v.score; // legacy
-                        if (v.timestamp) best.timestamp = v.timestamp;
-                        users[userId] = {
-                            name: v.name || (this.currentUser && this.currentUser.工号 === userId ? this.currentUser.姓名 : ''),
-                            attemptsCount: 0,
-                            attempts: [],
-                            best: Object.keys(best).length ? best : null
-                        };
-                    }
-                    this.leaderboard = { version: this.leaderboardVersion, users };
-                }
-                if (!this.leaderboard.version) this.leaderboard.version = this.leaderboardVersion;
-                if (!this.leaderboard.users) this.leaderboard.users = {};
-            }
-
-            ensureUsers() {
-                if (!this.leaderboard || !this.leaderboard.users) this.normalizeLeaderboard();
-                return this.leaderboard.users;
-            }
-
-            async beginAttemptIfAllowed() {
-                const userId = this.currentUser.工号;
-                const nickname = this.currentUser.姓名;
-                try {
-                    const resp = await fetch(`${WORKER_BASE_URL}/begin`, {
-                        method: 'POST',
-                        headers: { 'content-type': 'application/json' },
-                        body: JSON.stringify({ userId, nickname })
-                    });
-                    const data = await resp.json().catch(() => ({}));
-                    if (!resp.ok || !data.ok) {
-                        alert('本用户可用次数已用完（最多3次）。');
-                        return false;
-                    }
-                    const el = document.getElementById('remainingAttempts');
-                    if (el && typeof data.attemptsCount === 'number') {
-                        el.textContent = String(Math.max(0, this.maxAttempts - data.attemptsCount));
-                    }
-                    this.currentAttemptId = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-                    return true;
-                } catch (e) {
-                    console.warn('调用 /begin 失败', e);
-                    alert('网络异常，请稍后重试');
-                    return false;
-                }
-            }
-
-            completeAttempt(result) {
-                const users = this.ensureUsers();
-                const userId = this.currentUser && this.currentUser.工号;
-                if (!userId) return;
-                const node = users[userId];
-                if (!node || !node.attempts || node.attempts.length === 0) return;
-                const target = node.attempts.find(a => a.id === this.currentAttemptId) || node.attempts[0];
-                if (!target) return;
-                if (target.status !== 'started') return;
-                target.status = 'completed';
-                target.completedAt = new Date().toISOString();
-                target.timeMs = result.timeMs;
-                target.steps = result.steps;
-                users[userId] = node;
-                this.leaderboard.users = users;
-                this.updateRemainingAttemptsUI();
-            }
-
-            updateRemainingAttemptsUI() {
-                try {
-                    const el = document.getElementById('remainingAttempts');
-                    if (!el) return;
-                    const users = this.ensureUsers();
-                    const userId = this.currentUser && this.currentUser.工号;
-                    if (!userId) { el.textContent = '—'; return; }
-                    const node = users[userId];
-                    const used = node && node.attemptsCount ? node.attemptsCount : 0;
-                    el.textContent = String(Math.max(0, this.maxAttempts - used));
-                } catch (_) {}
-            }
 
             // 计时相关方法
             startTimerIfNeeded() {
@@ -1236,304 +866,16 @@
             game.shufflePuzzle();
         }
 
-        function resetPuzzle() {
-            game.resetPuzzle();
-        }
-
         function closeWinMessage() {
             document.getElementById('overlay').style.display = 'none';
             document.getElementById('winMessage').style.display = 'none';
             game.shufflePuzzle();
         }
 
-        function showLoginModal() {
-            game.showLoginModal();
-        }
-
-        function closeLoginModal() {
-            game.closeLoginModal();
-        }
-
-        function handleLogin(event) {
-            event.preventDefault();
-            
-            const employeeId = document.getElementById('employeeId').value.trim();
-            const employeeName = document.getElementById('employeeName').value.trim();
-            const errorElement = document.getElementById('loginError');
-            
-            if (!employeeId || !employeeName) {
-                errorElement.textContent = '请输入工号和姓名';
-                errorElement.style.display = 'block';
-                return;
-            }
-            
-            if (game.login(employeeId, employeeName)) {
-                // 登录成功
-                errorElement.style.display = 'none';
-                // 登录后同步剩余次数
-                (async () => {
-                    try {
-                        const resp = await fetch(`${WORKER_BASE_URL}/attempts?userId=${encodeURIComponent(employeeId)}`);
-                        const data = await resp.json().catch(() => ({}));
-                        const el = document.getElementById('remainingAttempts');
-                        if (el && typeof data.attemptsCount === 'number') {
-                            el.textContent = String(Math.max(0, game.maxAttempts - data.attemptsCount));
-                        }
-                    } catch (_) {}
-                })();
-            } else {
-                // 登录失败
-                errorElement.textContent = '工号或姓名输入错误';
-                errorElement.style.display = 'block';
-            }
-        }
-
-        function showLeaderboard() {
-            game.showLeaderboard();
-        }
-
-        function closeLeaderboard() {
-            game.closeLeaderboard();
-        }
-
-        function showSettingsModal() {
-            document.getElementById('overlay').style.display = 'block';
-            document.getElementById('settingsModal').style.display = 'block';
-            document.getElementById('adminPanel').style.display = 'none';
-            document.getElementById('settingsBody').style.display = 'block';
-            document.getElementById('settingsError').style.display = 'none';
-            document.getElementById('settingsPwd').value = '';
-        }
-        function closeSettingsModal() {
-            document.getElementById('overlay').style.display = 'none';
-            document.getElementById('settingsModal').style.display = 'none';
-        }
-        function enterSettings() {
-            const pwd = (document.getElementById('settingsPwd').value || '').trim();
-            if (pwd === '1314520') {
-                document.getElementById('settingsBody').style.display = 'none';
-                document.getElementById('adminPanel').style.display = 'block';
-            } else {
-                const el = document.getElementById('settingsError');
-                el.textContent = '密码错误';
-                el.style.display = 'block';
-            }
-        }
-        async function adminClearAll() {
-            const pwd1 = prompt('请输入密码确认删除：');
-            if (pwd1 !== '1314520') { alert('密码错误'); return; }
-            const pwd2 = prompt('请再次输入密码：');
-            if (pwd2 !== '1314520') { alert('密码不一致'); return; }
-            const resp = await fetch(`${WORKER_BASE_URL}/admin/clear`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ password: '1314520' }) });
-            const data = await resp.json().catch(() => ({}));
-            if (data && data.ok) {
-                alert('已清空排行榜');
-            } else {
-                alert('操作失败');
-            }
-        }
-        function toCsvRow(arr) { return arr.map(v => '"' + String(v ?? '').replace(/"/g, '""') + '"').join(','); }
-        async function adminExportCSV() {
-            try {
-                const resp = await fetch(`${WORKER_BASE_URL}/leaderboard?limit=1000`);
-                const list = await resp.json();
-                const header = ['排名','工号','姓名','时间(ms)','步数','剩余次数'];
-                const rows = [header];
-                list.forEach((row, idx) => {
-                    const remaining = typeof row.attemptsCount === 'number' ? Math.max(0, 3 - row.attemptsCount) : '';
-                    rows.push([idx + 1, row.userId || '', row.nickname || '', row.timeMs || '', row.moves || '', remaining]);
-                });
-                const csv = rows.map(toCsvRow).join('\n');
-                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url; a.download = 'leaderboard.csv'; a.click();
-                URL.revokeObjectURL(url);
-            } catch (e) { alert('导出失败'); }
-        }
-        function parseTimeInputToMs(raw) {
-            const v = String(raw || '').trim();
-            if (!v) return undefined;
-            if (v.includes(':')) {
-                const parts = v.split(':').map(p => parseInt(p, 10) || 0);
-                // support mm:ss or hh:mm:ss
-                let ms = 0;
-                if (parts.length === 2) {
-                    const [mm, ss] = parts;
-                    ms = (mm * 60 + ss) * 1000;
-                } else if (parts.length === 3) {
-                    const [hh, mm, ss] = parts;
-                    ms = ((hh * 60 + mm) * 60 + ss) * 1000;
-                }
-                return ms;
-            }
-            // pure number: treat as seconds if < 1000, otherwise ms
-            const n = parseInt(v, 10);
-            if (!Number.isFinite(n)) return undefined;
-            return n < 1000 ? n * 1000 : n;
-        }
-        async function adminEditUser() {
-            const userId = document.getElementById('admUserId').value.trim();
-            if (!userId) { alert('工号必填'); return; }
-            const payload = {
-                password: '1314520',
-                userId,
-                nickname: document.getElementById('admNickname').value.trim() || undefined,
-                timeMs: parseTimeInputToMs(document.getElementById('admTime').value),
-                moves: parseInt(document.getElementById('admMoves').value, 10) || undefined,
-                attemptsCount: parseInt(document.getElementById('admAttempts').value, 10)
-            };
-            const resp = await fetch(`${WORKER_BASE_URL}/admin/edit`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
-            const data = await resp.json().catch(() => ({}));
-            if (data && data.ok) { alert('已保存'); } else { alert('保存失败'); }
-        }
-
-        function showConfigModal() {
-            document.getElementById('overlay').style.display = 'block';
-            document.getElementById('configModal').style.display = 'block';
-            
-            // 加载当前配置
-            document.getElementById('gistId').value = game.gistConfig.gistId || '';
-            document.getElementById('githubToken').value = game.gistConfig.token || '';
-            
-            // 更新同步状态
-            updateSyncStatus();
-        }
-
-        function closeConfigModal() {
-            document.getElementById('overlay').style.display = 'none';
-            document.getElementById('configModal').style.display = 'none';
-        }
-
-        function saveConfig() {
-            const gistId = document.getElementById('gistId').value.trim();
-            const token = document.getElementById('githubToken').value.trim();
-            
-            game.gistConfig.gistId = gistId;
-            game.gistConfig.token = token;
-            
-            // 保存到本地存储
-            localStorage.setItem('gistConfig', JSON.stringify(game.gistConfig));
-            
-            // 更新同步状态
-            updateSyncStatus();
-            
-            alert('设置已保存！');
-        }
-
-        function updateSyncStatus() {
-            const statusElement = document.getElementById('syncStatus');
-            
-            if (!game.gistConfig.gistId || game.gistConfig.gistId === 'YOUR_GIST_ID_HERE') {
-                statusElement.textContent = '未配置';
-                statusElement.className = 'sync-status unknown';
-            } else if (!game.gistConfig.token || game.gistConfig.token === 'YOUR_GITHUB_TOKEN_HERE') {
-                statusElement.textContent = 'Token未设置';
-                statusElement.className = 'sync-status unknown';
-            } else {
-                statusElement.textContent = '已配置';
-                statusElement.className = 'sync-status connected';
-            }
-        }
-
-        async function testConnection() {
-            const statusElement = document.getElementById('syncStatus');
-            statusElement.textContent = '测试中...';
-            statusElement.className = 'sync-status unknown';
-            
-            try {
-                await game.loadLeaderboardFromGist();
-                statusElement.textContent = '连接成功';
-                statusElement.className = 'sync-status connected';
-            } catch (error) {
-                statusElement.textContent = '连接失败';
-                statusElement.className = 'sync-status disconnected';
-                console.error('连接测试失败:', error);
-            }
-        }
-
         // 初始化游戏
         window.addEventListener('load', () => {
             game = new PuzzleGame();
         });
-
-        // ====== 渲染 Worker 返回的排行榜（独立于 Gist 结构） ======
-        PuzzleGame.prototype.renderLeaderboardFromWorker = function(list) {
-            try {
-                const leaderboardList = document.getElementById('leaderboardList');
-                const currentBar = document.getElementById('leaderboardCurrentUser');
-                if (!Array.isArray(list) || list.length === 0) {
-                    if (currentBar) currentBar.style.display = 'none';
-                    leaderboardList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">暂无排行榜数据</p>';
-                    return;
-                }
-                // 去重：即使后端意外返回重复 userId，也只保留一条最佳
-                const seen = new Set();
-                const deduped = [];
-                for (const row of list) {
-                    const key = row.userId || row.nickname;
-                    if (seen.has(key)) continue;
-                    seen.add(key);
-                    deduped.push(row);
-                }
-                // 排序：时间升序，其次步数升序（与后端一致）
-                deduped.sort((a, b) => {
-                    const ta = typeof a.timeMs === 'number' ? a.timeMs : Infinity;
-                    const tb = typeof b.timeMs === 'number' ? b.timeMs : Infinity;
-                    if (ta !== tb) return ta - tb;
-                    const sa = typeof a.moves === 'number' ? a.moves : Infinity;
-                    const sb = typeof b.moves === 'number' ? b.moves : Infinity;
-                    return sa - sb;
-                });
-                const html = deduped.map((row, index) => {
-                    const rank = index + 1;
-                    const rankClass = rank <= 3 ? `rank-${rank}` : '';
-                    const isCurrentUser = this.isLoggedIn && this.currentUser && row && row.nickname && (this.currentUser.姓名 === row.nickname);
-                    const userClass = isCurrentUser ? 'current-user' : '';
-                    const t = Number(row.timeMs);
-                    const timeText = Number.isFinite(t) && t > 0 ? this.formatMs(t) : '—';
-                    const stepsVal = typeof row.moves === 'number' ? row.moves : '—';
-                    const remaining = typeof row.attemptsCount === 'number' ? Math.max(0, this.maxAttempts - row.attemptsCount) : '—';
-                    return `
-                        <div class="leaderboard-item ${rankClass} ${userClass}">
-                            <div class="leaderboard-rank">${rank}</div>
-                            <div class="leaderboard-user">${row.nickname || row.userId || ''}</div>
-                            <div class="leaderboard-score">⏱️ ${timeText}｜👣 ${stepsVal}步｜余${remaining}</div>
-                        </div>
-                    `;
-                }).join('');
-                leaderboardList.innerHTML = html;
-
-                // 显示当前登录用户信息（置顶展示，不影响排序列表）
-                try {
-                    const user = this.currentUser;
-                    if (user && user.工号) {
-                        const myIndex = deduped.findIndex(r => String(r.userId) === String(user.工号) || String(r.nickname) === String(user.姓名));
-                        const me = myIndex >= 0 ? deduped[myIndex] : null;
-                        if (me) {
-                            const t2 = Number(me.timeMs);
-                            const timeText = Number.isFinite(t2) && t2 > 0 ? this.formatMs(t2) : '—';
-                            const stepsVal = typeof me.moves === 'number' ? me.moves : '—';
-                            const remaining = typeof me.attemptsCount === 'number' ? Math.max(0, this.maxAttempts - me.attemptsCount) : '—';
-                            currentBar.style.display = 'block';
-                            currentBar.innerHTML = `
-                                <div class="leaderboard-item current-user" style="margin:0">
-                                    <div class="leaderboard-rank">${myIndex + 1}</div>
-                                    <div class="leaderboard-user">${me.nickname || user.姓名} (${user.工号})</div>
-                                    <div class="leaderboard-score">⏱️ ${timeText}｜👣 ${stepsVal}步｜余${remaining}</div>
-                                </div>
-                            `;
-                        } else if (currentBar) {
-                            currentBar.style.display = 'none';
-                        }
-                    } else if (currentBar) {
-                        currentBar.style.display = 'none';
-                    }
-                } catch (_) {}
-            } catch (e) {
-                console.error('渲染 Worker 排行榜失败:', e);
-            }
-        }
     </script>
 </body>
 </html>
