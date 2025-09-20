@@ -88,3 +88,5 @@ wrangler deploy
 - 不同的Worker URL和域名配置
 - 独立的用户数据文件
 - 独立的游戏标题和标识
+
+
