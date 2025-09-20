@@ -1,0 +1,20 @@
+name = "game2-worker"
+main = "src/index.ts"
+compatibility_date = "2025-09-16"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "game2_leaderboard"
+# 部署后使用 `wrangler d1 list` 查到真实 ID 并替换
+database_id = "2a38cad9-34f9-4ed7-b2f3-4cb925ed10ad"
+
+[[kv_namespaces]]
+binding = "CACHE"
+# 创建后填入 KV 命名空间 ID
+id = "817c89e2d5264e57b11edf850005802d"
+
+[vars]
+# 允许的前端域名（逗号分隔）
+ALLOWED_ORIGINS = "https://game2.biboran.top,https://game2-worker.hmh38324.workers.dev"
+
+
