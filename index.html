@@ -151,7 +151,10 @@
         }
 
         .puzzle-piece.card-back {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.6;
             transform: rotateY(180deg);
         }
 
@@ -592,7 +595,7 @@
     <div class="game-container">
         <h1>🎯 对对碰游戏</h1>
         <div class="game-info">
-            <p>点击翻开卡片，找到相邻的正确配对！每次只能翻开2张牌！</p>
+            <p>点击翻开卡片，找到所有8对相同的图片！每次只能翻开2张牌！</p>
         </div>
         
         <div class="controls">
@@ -616,7 +619,7 @@
                 <div class="reference-label">🎯 游戏说明</div>
                 <div class="reference-container" style="display: flex; align-items: center; justify-content: center; font-size: 16px; color: #666; text-align: center; line-height: 1.6;">
                     <div>
-                        <p>点击翻开卡片，找到正确的配对</p>
+                        <p>点击翻开卡片，找到相同的图片</p>
                         <p>每次只能翻开2张牌</p>
                         <p>已配对: <span id="matchedCount">0</span>/8 对</p>
                     </div>
@@ -719,11 +722,6 @@
                 this.matchedPairs = 0; // 已匹配的对数
                 this.flippedCards = []; // 存储已翻开的卡片
                 this.isFlipping = false; // 是否正在翻转动画中
-                // 创建配对关系：每个位置对应正确的目标位置
-                this.correctPairs = [
-                    [0, 1], [2, 3], [4, 5], [6, 7],
-                    [8, 9], [10, 11], [12, 13], [14, 15]
-                ];
                 // 尝试与计时状态
                 this.hasAttemptRecorded = false; // 是否已记录开局
                 this.hasTimerRunning = false; // 是否已开始计时
@@ -737,12 +735,12 @@
                 this.leaderboardVersion = 2; // schema version
                 this.currentAttemptId = null;
                 this.maxAttempts = 3;
-                // 使用card_backgrounds文件夹中的16个背景图片
+                // 使用pic文件夹中的8个图片，每个图片出现2次
                 this.pieceImages = [
-                    'card_backgrounds/card_bg_0_0.png', 'card_backgrounds/card_bg_0_1.png', 'card_backgrounds/card_bg_0_2.png', 'card_backgrounds/card_bg_0_3.png',
-                    'card_backgrounds/card_bg_1_0.png', 'card_backgrounds/card_bg_1_1.png', 'card_backgrounds/card_bg_1_2.png', 'card_backgrounds/card_bg_1_3.png',
-                    'card_backgrounds/card_bg_2_0.png', 'card_backgrounds/card_bg_2_1.png', 'card_backgrounds/card_bg_2_2.png', 'card_backgrounds/card_bg_2_3.png',
-                    'card_backgrounds/card_bg_3_0.png', 'card_backgrounds/card_bg_3_1.png', 'card_backgrounds/card_bg_3_2.png', 'card_backgrounds/card_bg_3_3.png'
+                    'pic/1.png', 'pic/2.png', 'pic/3.png', 'pic/4.png',
+                    'pic/5.png', 'pic/6.png', 'pic/7.png', 'pic/8.png',
+                    'pic/1.png', 'pic/2.png', 'pic/3.png', 'pic/4.png',
+                    'pic/5.png', 'pic/6.png', 'pic/7.png', 'pic/8.png'
                 ];
                 this.loadPeopleData();
                 // Worker-only 模式，无 Gist
@@ -805,8 +803,11 @@
                             piece.style.backgroundImage = `url(${this.pieceImages[index]})`;
                             piece.classList.add('flipped');
                         } else {
-                            // 显示卡片背面
+                            // 显示卡片背面，设置对应的背景图片
                             piece.classList.add('card-back');
+                            const row = Math.floor(index / 4);
+                            const col = index % 4;
+                            piece.style.backgroundImage = `url('card_backgrounds/card_bg_${row}_${col}.png')`;
                         }
                         
                         // 如果已匹配，添加匹配状态
@@ -880,19 +881,12 @@
                 }
                 
                 const [index1, index2] = this.selectedPieces;
+                const image1 = this.pieceImages[index1];
+                const image2 = this.pieceImages[index2];
                 
-                // 检查这两个位置是否是正确的配对
-                let isCorrectPair = false;
-                for (const pair of this.correctPairs) {
-                    if ((pair[0] === index1 && pair[1] === index2) || 
-                        (pair[0] === index2 && pair[1] === index1)) {
-                        isCorrectPair = true;
-                        break;
-                    }
-                }
-                
-                if (isCorrectPair) {
-                    // 配对成功，将这两张卡片标记为已翻开
+                // 检查两张图片是否相同
+                if (image1 === image2) {
+                    // 匹配成功，将这两张卡片标记为已翻开
                     this.flippedCards.push(index1, index2);
                     this.matchedPairs++;
                     
@@ -945,10 +939,10 @@
 
             resetPuzzle() {
                 this.pieceImages = [
-                    'card_backgrounds/card_bg_0_0.png', 'card_backgrounds/card_bg_0_1.png', 'card_backgrounds/card_bg_0_2.png', 'card_backgrounds/card_bg_0_3.png',
-                    'card_backgrounds/card_bg_1_0.png', 'card_backgrounds/card_bg_1_1.png', 'card_backgrounds/card_bg_1_2.png', 'card_backgrounds/card_bg_1_3.png',
-                    'card_backgrounds/card_bg_2_0.png', 'card_backgrounds/card_bg_2_1.png', 'card_backgrounds/card_bg_2_2.png', 'card_backgrounds/card_bg_2_3.png',
-                    'card_backgrounds/card_bg_3_0.png', 'card_backgrounds/card_bg_3_1.png', 'card_backgrounds/card_bg_3_2.png', 'card_backgrounds/card_bg_3_3.png'
+                    'pic/1.png', 'pic/2.png', 'pic/3.png', 'pic/4.png',
+                    'pic/5.png', 'pic/6.png', 'pic/7.png', 'pic/8.png',
+                    'pic/1.png', 'pic/2.png', 'pic/3.png', 'pic/4.png',
+                    'pic/5.png', 'pic/6.png', 'pic/7.png', 'pic/8.png'
                 ];
                 this.moveCount = 0;
                 this.matchedPairs = 0;
