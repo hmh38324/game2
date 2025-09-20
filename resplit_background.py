@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-重新分割background.png，确保位置正确
+重新分割background.png，确保正确的4x4网格对应
 """
 
 from PIL import Image
 import os
 
-def split_background_correct():
+def resplit_background():
     # 读取原始图片
     background_path = '/Users/apple/Documents/cursor/game2/background.png'
     
@@ -43,11 +43,16 @@ def split_background_correct():
     piece_size = square_size // 4
     print(f"每个小块尺寸: {piece_size}x{piece_size}")
     
-    # 分割成16个小块，按照游戏中的索引顺序
-    for i in range(16):
-        # 计算在4x4网格中的位置
-        row = i // 4
-        col = i % 4
+    # 分割成16个小块 - 按照4x4网格的顺序
+    # 索引0-15对应位置：
+    # 0  1  2  3
+    # 4  5  6  7
+    # 8  9  10 11
+    # 12 13 14 15
+    
+    for index in range(16):
+        row = index // 4  # 行号 (0-3)
+        col = index % 4   # 列号 (0-3)
         
         # 计算裁剪区域
         left = col * piece_size
@@ -58,12 +63,12 @@ def split_background_correct():
         # 裁剪小块
         piece = square_img.crop((left, top, right, bottom))
         
-        # 保存小块，使用游戏中的索引命名
+        # 保存小块
         filename = f'card_bg_{row}_{col}.png'
         piece.save(os.path.join(card_bg_dir, filename))
-        print(f"索引 {i} -> 位置 ({row},{col}) -> 保存: {filename}")
+        print(f"索引{index} -> 位置({row},{col}) -> {filename}")
     
     print(f"完成！已将背景图片分割成16个小块，保存在 {card_bg_dir} 文件夹中")
 
 if __name__ == "__main__":
-    split_background_correct()
+    resplit_background()
