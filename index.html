@@ -636,7 +636,7 @@
                     // 延迟一下让用户看到100%进度
                     setTimeout(() => {
                         this.hideLoadingScreen();
-                        this.init();
+                    this.init();
                     }, 300);
                 } catch (error) {
                     console.error('图片预加载失败:', error);
@@ -723,9 +723,9 @@
                     if (this.pieceImages[index]) {
                         // 如果卡片已匹配，显示图片并标记为已匹配
                         if (this.flippedCards.includes(index) || this.selectedPieces.includes(index)) {
-                            piece.style.backgroundImage = `url(${this.pieceImages[index]})`;
+                        piece.style.backgroundImage = `url(${this.pieceImages[index]})`;
                             piece.classList.add('flipped');
-                        } else {
+                    } else {
                             // 显示卡片背面，设置对应的背景图片
                             piece.classList.add('card-back');
                             const row = Math.floor(index / 4);
@@ -773,10 +773,10 @@
                 this.moveCount++;
                 document.getElementById('moveCount').textContent = this.moveCount;
                 
-                // 首次有效移动时启动计时
-                this.startTimerIfNeeded();
-                
-                this.renderPuzzle();
+                    // 首次有效移动时启动计时
+                    this.startTimerIfNeeded();
+                    
+                    this.renderPuzzle();
                 
                 // 如果选中了两张图片，检查是否匹配
                 if (this.selectedPieces.length === 2) {
