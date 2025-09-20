@@ -77,10 +77,7 @@
             margin: 0 auto 30px;
             border: 3px solid #333;
             border-radius: 10px;
-            background-image: url('background.png');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+            background: #f0f0f0;
             padding: 10px;
         }
 
@@ -155,13 +152,6 @@
 
         .puzzle-piece.card-back {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: white;
-            font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
             transform: rotateY(180deg);
         }
 
@@ -812,7 +802,6 @@
                         } else {
                             // 显示卡片背面
                             piece.classList.add('card-back');
-                            piece.textContent = '?';
                         }
                         
                         // 如果已匹配，添加匹配状态
