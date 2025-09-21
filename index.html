@@ -130,6 +130,16 @@
             margin-bottom: 20px;
         }
 
+        .user-info {
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .user-info span {
+            font-weight: bold;
+        }
+
         button {
             background: linear-gradient(45deg, #667eea, #764ba2);
             color: white;
@@ -544,6 +554,12 @@
         
         <div class="controls">
             <button onclick="shufflePuzzle()">🔀 重新开始</button>
+            <button onclick="showLoginModal()" id="loginBtn">🔐 登录</button>
+            <button onclick="logout()" id="logoutBtn" style="display: none;">🚪 登出</button>
+        </div>
+        
+        <div class="user-info">
+            <p>用户: <span id="userInfo">未登录</span></p>
         </div>
         
         <div class="game-content">
@@ -560,6 +576,29 @@
     </div>
 
     <div class="overlay" id="overlay"></div>
+    
+    <!-- 登录弹窗 -->
+    <div class="login-modal" id="loginModal">
+        <div class="login-content">
+            <h2>🔐 用户登录</h2>
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="employeeId">工号:</label>
+                    <input type="text" id="employeeId" name="employeeId" required>
+                </div>
+                <div class="form-group">
+                    <label for="employeeName">姓名:</label>
+                    <input type="text" id="employeeName" name="employeeName" required>
+                </div>
+                <div class="error-message" id="loginError"></div>
+                <div class="form-buttons">
+                    <button type="submit">登录</button>
+                    <button type="button" onclick="closeLoginModal()">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
     <div class="win-message" id="winMessage">
         <h2>🎉 恭喜完成！</h2>
         <p>你成功消除了所有图片！</p>
@@ -585,6 +624,10 @@
                 this.timerStartMs = null; // 计时起点
                 this.elapsedMs = 0; // 当前累计用时
                 this.timerInterval = null; // 定时器句柄
+                // 登录状态
+                this.isLoggedIn = false; // 登录状态
+                this.currentUser = null; // 当前用户信息
+                this.peopleData = null; // 人员数据缓存
                 // 使用pic文件夹中的8个图片，每个图片出现2次
                 this.pieceImages = [
                     'pic/1.png', 'pic/2.png', 'pic/3.png', 'pic/4.png',
@@ -599,9 +642,26 @@
                         this.cardBackgrounds.push(`card_backgrounds/card_bg_${row}_${col}.png`);
                     }
                 }
-                this.preloadImages();
+                this.loadPeopleData();
             }
 
+            // 加载人员数据
+            async loadPeopleData() {
+                try {
+                    const response = await fetch('people.json');
+                    this.peopleData = await response.json();
+                    this.preloadImages();
+                } catch (error) {
+                    console.error('加载人员数据失败:', error);
+                    // 使用默认数据作为后备
+                    this.peopleData = [
+                        {"工号": "1", "姓名": "张三"},
+                        {"工号": "2", "姓名": "李四"},
+                        {"工号": "3", "姓名": "王五"}
+                    ];
+                    this.preloadImages();
+                }
+            }
 
             async preloadImages() {
                 // 显示加载提示
@@ -752,6 +812,12 @@
 
             selectPiece(index) {
                 if (this.isGameWon || this.isFlipping) return;
+                
+                // 检查是否已登录
+                if (!this.isLoggedIn) {
+                    alert('请先登录才能开始游戏！');
+                    return;
+                }
                 
                 // 如果图片已经被消除或已经翻开，不能选择
                 if (!this.pieceImages[index] || this.flippedCards.includes(index)) return;
@@ -948,6 +1014,72 @@
                 const ss = String(seconds).padStart(2, '0');
                 return `${mm}:${ss}`;
             }
+
+            // 登录验证
+            validateLogin(employeeId, employeeName) {
+                if (!this.peopleData) return false;
+                
+                return this.peopleData.some(person => 
+                    person.工号 === employeeId && person.姓名 === employeeName
+                );
+            }
+
+            // 登录处理
+            login(employeeId, employeeName) {
+                if (this.validateLogin(employeeId, employeeName)) {
+                    this.isLoggedIn = true;
+                    this.currentUser = { 工号: employeeId, 姓名: employeeName };
+                    this.updateUserInfo();
+                    this.closeLoginModal();
+                    return true;
+                }
+                return false;
+            }
+
+            // 登出
+            logout() {
+                this.isLoggedIn = false;
+                this.currentUser = null;
+                this.updateUserInfo();
+                // 重置游戏状态
+                this.resetPuzzle();
+            }
+
+            // 更新用户信息显示
+            updateUserInfo() {
+                const userInfoElement = document.getElementById('userInfo');
+                const loginBtn = document.getElementById('loginBtn');
+                const logoutBtn = document.getElementById('logoutBtn');
+                
+                if (this.isLoggedIn && this.currentUser) {
+                    userInfoElement.textContent = `${this.currentUser.姓名}(${this.currentUser.工号})`;
+                    userInfoElement.style.color = '#4CAF50';
+                    loginBtn.style.display = 'none';
+                    logoutBtn.style.display = 'inline-block';
+                } else {
+                    userInfoElement.textContent = '未登录';
+                    userInfoElement.style.color = '#e74c3c';
+                    loginBtn.style.display = 'inline-block';
+                    logoutBtn.style.display = 'none';
+                }
+            }
+
+            // 显示登录弹窗
+            showLoginModal() {
+                document.getElementById('overlay').style.display = 'block';
+                document.getElementById('loginModal').style.display = 'block';
+                document.getElementById('loginError').style.display = 'none';
+            }
+
+            // 关闭登录弹窗
+            closeLoginModal() {
+                document.getElementById('overlay').style.display = 'none';
+                document.getElementById('loginModal').style.display = 'none';
+                document.getElementById('loginError').style.display = 'none';
+                // 清空输入框
+                document.getElementById('employeeId').value = '';
+                document.getElementById('employeeName').value = '';
+            }
         }
 
         // 全局函数
@@ -961,6 +1093,47 @@
             document.getElementById('overlay').style.display = 'none';
             document.getElementById('winMessage').style.display = 'none';
             game.shufflePuzzle();
+        }
+
+        // 显示登录弹窗
+        function showLoginModal() {
+            game.showLoginModal();
+        }
+
+        // 关闭登录弹窗
+        function closeLoginModal() {
+            game.closeLoginModal();
+        }
+
+        // 处理登录表单提交
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const employeeId = document.getElementById('employeeId').value.trim();
+            const employeeName = document.getElementById('employeeName').value.trim();
+            const errorElement = document.getElementById('loginError');
+            
+            // 基础验证
+            if (!employeeId || !employeeName) {
+                errorElement.textContent = '请输入工号和姓名';
+                errorElement.style.display = 'block';
+                return;
+            }
+            
+            // 调用登录方法
+            if (game.login(employeeId, employeeName)) {
+                // 登录成功
+                errorElement.style.display = 'none';
+            } else {
+                // 登录失败
+                errorElement.textContent = '工号或姓名输入错误';
+                errorElement.style.display = 'block';
+            }
+        }
+
+        // 登出
+        function logout() {
+            game.logout();
         }
 
         // 初始化游戏
