@@ -553,7 +553,6 @@
         </div>
         
         <div class="controls">
-            <button onclick="shufflePuzzle()">🔀 重新开始</button>
             <button onclick="showLoginModal()" id="loginBtn">🔐 登录</button>
             <button onclick="logout()" id="logoutBtn" style="display: none;">🚪 登出</button>
         </div>
@@ -1084,10 +1083,6 @@
 
         // 全局函数
         let game;
-
-        function shufflePuzzle() {
-            game.shufflePuzzle();
-        }
 
         function closeWinMessage() {
             document.getElementById('overlay').style.display = 'none';
