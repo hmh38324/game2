@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>每日限制功能测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section h3 {
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .test-result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .test-result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .test-result.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 150px;
+        }
+        .form-group {
+            margin: 10px 0;
+        }
+        .form-group label {
+            display: inline-block;
+            width: 80px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎯 每日限制功能测试页面</h1>
+    
+    <div class="test-section">
+        <h3>1. 基础功能测试</h3>
+        <div class="form-group">
+            <label>工号:</label>
+            <input type="text" id="testEmployeeId" value="12345" placeholder="输入工号">
+        </div>
+        <div class="form-group">
+            <label>姓名:</label>
+            <input type="text" id="testEmployeeName" value="测试用户" placeholder="输入姓名">
+        </div>
+        <button onclick="testBasicFunctions()">测试基础功能</button>
+        <div id="basicTestResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>2. 每日限制测试</h3>
+        <button onclick="testDailyLimit()">测试每日限制检查</button>
+        <button onclick="testRecordGame()">测试记录游戏</button>
+        <button onclick="testLimitAfterRecord()">测试记录后限制</button>
+        <div id="limitTestResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>3. 数据管理测试</h3>
+        <button onclick="testDataManagement()">测试数据管理</button>
+        <button onclick="clearAllData()">清空所有数据</button>
+        <div id="dataTestResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>4. 时区测试</h3>
+        <button onclick="testTimezone()">测试时区计算</button>
+        <div id="timezoneTestResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>5. 完整流程测试</h3>
+        <button onclick="testCompleteFlow()">测试完整流程</button>
+        <div id="completeTestResult"></div>
+    </div>
+
+    <script>
+        // 每日限制管理器（复制自主游戏）
+        class DailyLimitManager {
+            constructor() {
+                this.gameId = 'game2';
+                this.storageKey = 'daily_limit_data';
+            }
+
+            getChinaToday() {
+                const now = new Date();
+                const chinaTime = new Intl.DateTimeFormat('en-CA', {
+                    timeZone: 'Asia/Shanghai',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                }).format(now);
+                return chinaTime;
+            }
+
+            getUserKey(employeeId, employeeName) {
+                return `${employeeId}_${employeeName}`;
+            }
+
+            getData() {
+                try {
+                    const data = localStorage.getItem(this.storageKey);
+                    const parsed = data ? JSON.parse(data) : { users: {} };
+                    
+                    if (!parsed.users || typeof parsed.users !== 'object') {
+                        return { users: {} };
+                    }
+                    
+                    return parsed;
+                } catch (error) {
+                    console.error('获取本地数据失败:', error);
+                    return { users: {} };
+                }
+            }
+
+            saveData(data) {
+                try {
+                    localStorage.setItem(this.storageKey, JSON.stringify(data));
+                    return true;
+                } catch (error) {
+                    console.error('保存本地数据失败:', error);
+                    return false;
+                }
+            }
+
+            checkDailyLimit(employeeId, employeeName) {
+                const userKey = this.getUserKey(employeeId, employeeName);
+                const today = this.getChinaToday();
+                
+                try {
+                    const data = this.getData();
+                    const user = data.users[userKey];
+                    
+                    if (user && user.lastPlayDate === today) {
+                        return {
+                            canPlay: false,
+                            reason: '今日已玩过游戏，请明天00:00后再试！',
+                            playedGames: user.games || {}
+                        };
+                    }
+                    
+                    return { canPlay: true };
+                } catch (error) {
+                    console.error('检查每日限制失败:', error);
+                    return { canPlay: true };
+                }
+            }
+
+            recordGamePlay(employeeId, employeeName) {
+                const userKey = this.getUserKey(employeeId, employeeName);
+                const today = this.getChinaToday();
+                
+                try {
+                    const data = this.getData();
+                    
+                    if (!data.users[userKey]) {
+                        data.users[userKey] = {
+                            lastPlayDate: today,
+                            games: {}
+                        };
+                    }
+                    
+                    data.users[userKey].lastPlayDate = today;
+                    data.users[userKey].games[this.gameId] = true;
+                    
+                    const success = this.saveData(data);
+                    return success;
+                } catch (error) {
+                    console.error('记录游戏失败:', error);
+                    return false;
+                }
+            }
+        }
+
+        const manager = new DailyLimitManager();
+
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="test-result ${type}">${message}</div>`;
+        }
+
+        function testBasicFunctions() {
+            const employeeId = document.getElementById('testEmployeeId').value;
+            const employeeName = document.getElementById('testEmployeeName').value;
+            
+            if (!employeeId || !employeeName) {
+                showResult('basicTestResult', '请输入工号和姓名', 'error');
+                return;
+            }
+
+            const today = manager.getChinaToday();
+            const userKey = manager.getUserKey(employeeId, employeeName);
+            
+            let result = `✅ 时区计算: ${today}<br>`;
+            result += `✅ 用户标识: ${userKey}<br>`;
+            result += `✅ 数据获取: ${JSON.stringify(manager.getData())}<br>`;
+            
+            showResult('basicTestResult', result, 'success');
+        }
+
+        function testDailyLimit() {
+            const employeeId = document.getElementById('testEmployeeId').value;
+            const employeeName = document.getElementById('testEmployeeName').value;
+            
+            if (!employeeId || !employeeName) {
+                showResult('limitTestResult', '请输入工号和姓名', 'error');
+                return;
+            }
+
+            const check = manager.checkDailyLimit(employeeId, employeeName);
+            
+            let result = `检查结果: ${check.canPlay ? '✅ 可以游戏' : '❌ 不能游戏'}<br>`;
+            if (!check.canPlay) {
+                result += `限制原因: ${check.reason}<br>`;
+                result += `已玩游戏: ${JSON.stringify(check.playedGames)}<br>`;
+            }
+            
+            showResult('limitTestResult', result, check.canPlay ? 'success' : 'info');
+        }
+
+        function testRecordGame() {
+            const employeeId = document.getElementById('testEmployeeId').value;
+            const employeeName = document.getElementById('testEmployeeName').value;
+            
+            if (!employeeId || !employeeName) {
+                showResult('limitTestResult', '请输入工号和姓名', 'error');
+                return;
+            }
+
+            const success = manager.recordGamePlay(employeeId, employeeName);
+            
+            let result = `记录结果: ${success ? '✅ 成功' : '❌ 失败'}<br>`;
+            result += `当前数据: ${JSON.stringify(manager.getData())}<br>`;
+            
+            showResult('limitTestResult', result, success ? 'success' : 'error');
+        }
+
+        function testLimitAfterRecord() {
+            const employeeId = document.getElementById('testEmployeeId').value;
+            const employeeName = document.getElementById('testEmployeeName').value;
+            
+            if (!employeeId || !employeeName) {
+                showResult('limitTestResult', '请输入工号和姓名', 'error');
+                return;
+            }
+
+            const check = manager.checkDailyLimit(employeeId, employeeName);
+            
+            let result = `记录后检查: ${check.canPlay ? '❌ 应该被限制' : '✅ 正确被限制'}<br>`;
+            if (!check.canPlay) {
+                result += `限制原因: ${check.reason}<br>`;
+            }
+            
+            showResult('limitTestResult', result, check.canPlay ? 'error' : 'success');
+        }
+
+        function testDataManagement() {
+            const data = manager.getData();
+            const userCount = Object.keys(data.users).length;
+            
+            let result = `用户数量: ${userCount}<br>`;
+            result += `存储键: ${manager.storageKey}<br>`;
+            result += `游戏ID: ${manager.gameId}<br>`;
+            result += `完整数据: <pre>${JSON.stringify(data, null, 2)}</pre>`;
+            
+            showResult('dataTestResult', result, 'info');
+        }
+
+        function clearAllData() {
+            localStorage.removeItem(manager.storageKey);
+            showResult('dataTestResult', '✅ 所有数据已清空', 'success');
+        }
+
+        function testTimezone() {
+            const now = new Date();
+            const chinaTime = manager.getChinaToday();
+            const localTime = now.toISOString().split('T')[0];
+            
+            let result = `本地时间: ${localTime}<br>`;
+            result += `中国时区: ${chinaTime}<br>`;
+            result += `时区差异: ${chinaTime !== localTime ? '存在差异' : '无差异'}<br>`;
+            
+            showResult('timezoneTestResult', result, 'info');
+        }
+
+        function testCompleteFlow() {
+            const employeeId = document.getElementById('testEmployeeId').value;
+            const employeeName = document.getElementById('testEmployeeName').value;
+            
+            if (!employeeId || !employeeName) {
+                showResult('completeTestResult', '请输入工号和姓名', 'error');
+                return;
+            }
+
+            // 清空数据开始测试
+            localStorage.removeItem(manager.storageKey);
+            
+            let result = '🔄 开始完整流程测试<br><br>';
+            
+            // 1. 第一次检查 - 应该允许
+            const check1 = manager.checkDailyLimit(employeeId, employeeName);
+            result += `1. 第一次检查: ${check1.canPlay ? '✅ 允许' : '❌ 不允许'}<br>`;
+            
+            // 2. 记录游戏
+            const record = manager.recordGamePlay(employeeId, employeeName);
+            result += `2. 记录游戏: ${record ? '✅ 成功' : '❌ 失败'}<br>`;
+            
+            // 3. 第二次检查 - 应该限制
+            const check2 = manager.checkDailyLimit(employeeId, employeeName);
+            result += `3. 第二次检查: ${check2.canPlay ? '❌ 应该被限制' : '✅ 正确被限制'}<br>`;
+            
+            // 4. 验证数据
+            const data = manager.getData();
+            const userKey = manager.getUserKey(employeeId, employeeName);
+            const user = data.users[userKey];
+            result += `4. 数据验证: ${user ? '✅ 用户数据存在' : '❌ 用户数据不存在'}<br>`;
+            if (user) {
+                result += `   最后游戏日期: ${user.lastPlayDate}<br>`;
+                result += `   已玩游戏: ${JSON.stringify(user.games)}<br>`;
+            }
+            
+            // 判断测试结果
+            const testPassed = check1.canPlay && record && !check2.canPlay && user;
+            result += `<br>🎯 测试结果: ${testPassed ? '✅ 全部通过' : '❌ 存在问题'}`;
+            
+            showResult('completeTestResult', result, testPassed ? 'success' : 'error');
+        }
+    </script>
+</body>
+</html>
